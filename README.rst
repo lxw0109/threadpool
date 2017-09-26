@@ -138,9 +138,9 @@ Due to the parallel nature of threads, you have to keep some things in mind:
   scarce resource (e.g. a harddisk or stdout). This will probably be slower
   than taking a serialized approach.
 
-* **If you call ``ThreadPool.wait()`` the main thread will block until _all_
+* **If you call `ThreadPool.wait()` the main thread will block until _all_
   results have arrived. If you only want to check for results that are available
-  immediately, use ``ThreadPool.poll()``.**
+  immediately, use `ThreadPool.poll()`.**
 
 * The results of the work requests are not stored anywhere. You should provide
   an appropriate callback if you want to do so.
