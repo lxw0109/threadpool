@@ -125,8 +125,8 @@ purpose. This one distinguishes itself by the following characteristics:
   you're done!"
 
 * Threads don't eat up cycles while waiting to be assigned a task, they just
-  block when the task queue is empty (though they wake up every few seconds to
-  check whether they are dismissd).
+  block when the task queue is empty (**though they wake up every few seconds to
+  check whether they are dismissd**).
 
 
 Notes
@@ -134,7 +134,7 @@ Notes
 
 Due to the parallel nature of threads, you have to keep some things in mind:
 
-* Do not use simultaneous threads for tasks were they compete for a single,
+* Do not use simultaneous threads for tasks where they compete for a single,
   scarce resource (e.g. a harddisk or stdout). This will probably be slower
   than taking a serialized approach.
 
