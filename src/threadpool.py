@@ -33,7 +33,7 @@ Website : http://chrisarndt.de/projects/threadpool/
 """
 __docformat__ = "restructuredtext en"
 
-__all__ = [    # TODO: usage of "__all__" and some other similar variables
+__all__ = [
     'make_requests',
     'NoResultsPending',
     'NoWorkersAvailable',
@@ -75,7 +75,7 @@ def _handle_thread_exception(request, exc_info):
     This just prints the exception info via ``traceback.print_exception``.
 
     """
-    traceback.print_exception(*exc_info)    # TODO: usage of "*"
+    traceback.print_exception(*exc_info)
 
 
 # utility functions
