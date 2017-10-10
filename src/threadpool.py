@@ -133,7 +133,7 @@ class WorkerThread(threading.Thread):
         self._results_queue = results_queue
         self._poll_timeout = poll_timeout
         self._dismissed = threading.Event()
-        self.start()
+        self.start()    # 创建线程后立刻启动线程
 
     def run(self):
         """Repeatedly process the job queue until told to exit."""
@@ -220,7 +220,7 @@ class WorkRequest:
         self.args = args or []
         self.kwds = kwds or {}
 
-    def __str__(self):    # TODO: __str__()?
+    def __str__(self):
         # return "<WorkRequest id=%s args=%r kwargs=%r exception=%s>" % \
         #     (self.request_id, self.args, self.kwds, self.exception)
         return "<WorkRequest id={0} args={1} kwargs={2} exception={3}>".format(
@@ -260,7 +260,7 @@ class ThreadPool:
         self._results_queue = Queue.Queue(res_q_size)
         self.workers = []    # list of WorkerThread.
         self.dismissed_workers = []
-        self.work_requests = {}
+        self.work_requests = {}    # requests waiting for being processed.
         self.create_workers(num_workers, poll_timeout)
 
     def create_workers(self, num_workers, poll_timeout=5):
@@ -351,7 +351,7 @@ if __name__ == '__main__':
 
     # the work the threads will have to do (rather trivial in our example)
     def do_something(data):
-        time.sleep(random.randint(1,5))
+        time.sleep(random.randint(1, 5))
         result = round(random.random() * data, 5)
         # just to show off, we throw an exception once in a while
         if result > 5:
@@ -360,7 +360,8 @@ if __name__ == '__main__':
 
     # this will be called each time a result is available
     def print_result(request, result):
-        print("**** Result from request #%s: %r" % (request.request_id, result))
+        # print("**** Result from request #%s: %r" % (request.request_id, result))
+        print("Result from request #{}: {}".format(request.request_id, result))
 
     # this will be called when an exception occurs within a thread
     # this example exception handler does little more than the default handler
@@ -370,36 +371,36 @@ if __name__ == '__main__':
             print(request)
             print(exc_info)
             raise SystemExit
-        print("**** Exception occured in request #%s: %s" % \
-          (request.request_id, exc_info))
+        print("Exception occured in request #{0}: {1}" .format(request.request_id, exc_info))
 
     # assemble the arguments for each job to a list...
-    data = [random.randint(1,10) for i in range(20)]
+    data = [random.randint(1, 10) for i in range(20)]
     # ... and build a WorkRequest object for each item in data
+    # def make_requests(     callable_, args_list, callback=None, exc_callback=_handle_thread_exception):
     requests = make_requests(do_something, data, print_result, handle_exception)
     # to use the default exception handler, uncomment next line and comment out
     # the preceding one.
-    #requests = make_requests(do_something, data, print_result)
+    # requests = make_requests(do_something, data, print_result)
 
     # or the other form of args_lists accepted by make_requests: ((,), {})
-    data = [((random.randint(1,10),), {}) for i in range(20)]
+    data = [((random.randint(1, 10),), {}) for i in range(20)]
     requests.extend(
         make_requests(do_something, data, print_result, handle_exception)
-        #make_requests(do_something, data, print_result)
+        # make_requests(do_something, data, print_result)
         # to use the default exception handler, uncomment next line and comment
         # out the preceding one.
     )
 
     # we create a pool of 3 worker threads
     print("Creating thread pool with 3 worker threads.")
-    main = ThreadPool(3)
+    pool = ThreadPool(3)    # 初始化ThreadPool时，创建n个(此处3个)线程，线程立刻会被启动start().
 
     # then we put the work requests in the queue...
     for req in requests:
-        main.put_request(req)
-        print("Work request #%s added." % req.request_id)
+        pool.put_request(req)
+        print("Work request #{0} added.".format(req.request_id))
     # or shorter:
-    # [main.put_request(req) for req in requests]
+    # [pool.put_request(req) for req in requests]
 
     # ...and wait for the results to arrive in the result queue
     # by using ThreadPool.wait(). This would block until results for
@@ -408,25 +409,27 @@ if __name__ == '__main__':
 
     # instead we can poll for results while doing something else:
     i = 0
-    while True:
+    while 1:
         try:
             time.sleep(0.5)
-            main.poll()
-            print("Main thread working...")
-            print("(active worker threads: %i)" % (threading.activeCount()-1, ))
+            pool.poll()
+            print("Main thread is working.")
+            # print("(active worker threads: %i)" % (threading.activeCount()-1, ))
+            print("(Active worker threads: {})".format(threading.activeCount()-1))
             if i == 10:
-                print("**** Adding 3 more worker threads...")
-                main.create_workers(3)
+                print("Adding 3 more worker threads.")
+                pool.create_workers(3)
             if i == 20:
-                print("**** Dismissing 2 worker threads...")
-                main.dismiss_workers(2)
+                print("Dismissing 2 worker threads.")
+                pool.dismiss_workers(2)
             i += 1
         except KeyboardInterrupt:
-            print("**** Interrupted!")
+            print("[KeyboardInterrupt]Interrupted!")
             break
         except NoResultsPending:
-            print("**** No pending results.")
+            print("No pending results.")
             break
-    if main.dismissed_workers:
-        print("Joining all dismissed worker threads...")
-        main.join_all_dismissed_workers()
+
+    if pool.dismissed_workers:
+        print("Joining all dismissed worker threads.")
+        pool.join_all_dismissed_workers()
