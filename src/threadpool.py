@@ -309,7 +309,7 @@ class ThreadPool:
         while 1:
             # still results pending?
             if not self.work_requests:
-                raise NoResultsPending
+                raise NoResultsPending    # NOTE: poll()函数内抛出异常，在函数调用处捕获异常，进行相应的处理
             # are there still workers to process remaining requests?
             elif block and not self.workers:
                 raise NoWorkersAvailable
@@ -427,6 +427,7 @@ if __name__ == '__main__':
             print("[KeyboardInterrupt]Interrupted!")
             break
         except NoResultsPending:
+            # poll()函数内抛出异常，在此处捕获异常，结束不断进行poll()的循环
             print("No pending results.")
             break
 
